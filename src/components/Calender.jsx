@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import EventModal from "./eventModel";
+import EventModal from "./EventModel";
 import Export from "./Export";
 import Header from "./Header";
 import SearchBar from "./SearchBar";
@@ -53,7 +53,7 @@ const Calendar = () => {
   const saveEvent = (eventData) => {
     const dateEvents = events[selectedDate] || [];
    const updatedEvents =  setEvents({ ...events, [selectedDate]: [...dateEvents, eventData] });
-   
+
    localStorage.setItem("calendarEvents", JSON.stringify(updatedEvents));
 
 
