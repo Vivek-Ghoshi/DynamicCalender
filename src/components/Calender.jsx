@@ -7,10 +7,10 @@ import SearchBar from "./SearchBar";
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
-  const [events, setEvents] = useState({});
+  const [events, setEvents] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
-  const [data , setData ] = useState('');
+  const [editMode , setEditMode ] = useState(false);
  
 
   // Load events from localStorage on mount
@@ -52,12 +52,11 @@ const Calendar = () => {
 
   const saveEvent = (eventData) => {
     const dateEvents = events[selectedDate] || [];
-   const updatedEvents =  setEvents({ ...events, [selectedDate]: [...dateEvents, eventData] });
+   const updatedEvents ={ ...events, [selectedDate]: [...dateEvents, eventData] };
+
+   setEvents(updatedEvents);
 
    localStorage.setItem("calendarEvents", JSON.stringify(updatedEvents));
-
-
-
   };
 
   const handleDragStart = (event, draggedEvent) => {
@@ -69,9 +68,10 @@ const Calendar = () => {
     const droppedEvent = JSON.parse(event.dataTransfer.getData("event"));
     const prevDate = droppedEvent.oldDate;
     const newDate = day;
+
     // Remove event from old date
     const updatedOldDateEvents = events[prevDate].filter(
-      (e) => e !== droppedEvent
+      (e) => e.name !== droppedEvent.name
     );
     const updatedNewDateEvents = [
       ...(events[newDate] || []),
@@ -79,14 +79,37 @@ const Calendar = () => {
     ];
 
 
-    const updatedEvents = setEvents({
+    const updatedEvents = {
       ...events,
       [prevDate]: updatedOldDateEvents,
       [newDate]: updatedNewDateEvents,
-    });
+    };
+    setEvents(updatedEvents);
     localStorage.setItem("calendarEvents", JSON.stringify(updatedEvents));
   };
+  
+  // Editing an event //
 
+  const HandleEdit = (e,id)=>{
+    e.preventDefault();
+    const eventsToEdit = events[selectedDate][id]
+    setEditingEvent(eventsToEdit,id);
+     setIsModalOpen(true);
+     setEditMode(true)
+
+  };
+  const HandleDelete = (e,id)=>{
+      e.preventDefault();
+      const updatedEvents = {...events};
+      updatedEvents[selectedDate].splice(id,1);
+
+      if(updatedEvents[selectedDate].length == 0){
+        delete updatedEvents[selectedDate]
+      };
+
+      setEvents(updatedEvents);
+      localStorage.setItem("calendarEvents",JSON.stringify(updatedEvents))
+  };
    
 
   // Get Color Of Events
@@ -183,9 +206,18 @@ const Calendar = () => {
                     <div className="mt-2 text-gray-700">
                       {event.description}
                     </div>
+                  <div className="flex justify-center gap-4">
+                  <button
+                   onClick={(e) => HandleEdit(e,idx)}
+                   className="text-sm px-3 py-2 rounded-md text-white font-semibold bg-blue-500">Edit</button>
+                  <button
+                  onClick={(e) => HandleDelete(e,idx)}
+                   className="text-sm px-3 py-2 rounded-md text-white font-semibold bg-red-500">Delete</button>
+                </div>
                   </div>
                 ))}
               </ul>
+               
             ) : (
               <p className="text-gray-500">No events for this day.</p>
             )}
@@ -199,9 +231,15 @@ const Calendar = () => {
       {/* Modal */}
       <EventModal
         isOpen={isModalOpen}
+        setEditMode={setEditMode}
+        editMode={editMode}
         onClose={() => setIsModalOpen(false)}
         onSave={saveEvent}
+        setEvents={setEvents}
+        events={events} 
+        selectedDate={selectedDate}
         initialData={editingEvent}
+        setEditingEvent={setEditingEvent}
       />
     </div>
   );

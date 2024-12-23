@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const EventModal = ({ isOpen, onClose, onSave, initialData }) => {
+const EventModal = ({ isOpen, onClose,selectedDate, onSave,editMode,setEditMode,events, setEvents, initialData,setEditingEvent }) => {
   const [eventName, setEventName] = useState("");
   const [startTime, setStartTime] = useState("00:00");
   const [endTime, setEndTime] = useState("00:00");
@@ -24,7 +24,6 @@ const EventModal = ({ isOpen, onClose, onSave, initialData }) => {
       alert("Please fill in all fields.");
       return;
     }
-
     const newEvent = {
       name: eventName,
       start: startTime,
@@ -32,15 +31,38 @@ const EventModal = ({ isOpen, onClose, onSave, initialData }) => {
       description,
       type: eventType,
     };
-
-    onSave(newEvent);
     
+    if(editMode === true){
+       const updatedEvents = {...events};
+       updatedEvents[selectedDate] = updatedEvents[selectedDate].map(event => 
+        event.id === initialData.id ? {...events, ...newEvent } : event
+      );
+       setEvents(updatedEvents);
+       localStorage.setItem("calendarEvents",JSON.stringify(updatedEvents));
+       setEditMode(false);
+       setEditingEvent(null)
+    }
+    else{
+      const updatedEvents = { ...events };
+      const eventId = new Date().getTime();
+      updatedEvents[selectedDate] = [
+        ...(updatedEvents[selectedDate] || []),
+        { id: eventId, ...newEvent },
+      ];
+  
+      setEvents(updatedEvents);
+      localStorage.setItem("calendarEvents", JSON.stringify(updatedEvents));
+      onClose();
+      onSave(newEvent);
+      setEditMode(false)
+    }
+
     onClose();
     setEventName("");
     setStartTime("");
     setEndTime("");
     setDescription("");
-    setEventType("");
+    setEventType('');
   };
 
   return (
